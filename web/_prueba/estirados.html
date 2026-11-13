@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><script type="module">
+// Busca triángulos que se estiran al correr (pesos de hueso mal puestos) y dice a qué huesos siguen. ?a=ardilla
+import * as THREE from '../lib/three.min.js';
+import { crearPersonaje, animarPersonaje } from '../comun/personajes.js';
+const p = crearPersonaje(THREE, { animal: new URLSearchParams(location.search).get('a') || 'ardilla' });
+const mallas = []; p.g.traverse((o) => { if (o.isSkinnedMesh) mallas.push(o); });
+const medir = (m) => { const g = m.geometry, n = g.index.count, L = new Float32Array(n), a = new THREE.Vector3(), b = new THREE.Vector3(); p.g.updateMatrixWorld(true); m.skeleton.update();
+  for (let i = 0; i < n; i++) { m.getVertexPosition(g.index.getX(i), a); m.getVertexPosition(g.index.getX(i % 3 === 2 ? i - 2 : i + 1), b); L[i] = a.distanceTo(b); } return L; };
+for (let i = 0; i < 30; i++) animarPersonaje(p, { suelo: true, dt: 1 / 60 });
+const antes = mallas.map(medir);
+let x = 0; for (let i = 0; i < 120; i++) { x += 5.2 / 60; p.g.position.x = x; animarPersonaje(p, { suelo: true, dt: 1 / 60 }); }
+const despues = mallas.map(medir), cuenta = {};
+mallas.forEach((m, k) => { const g = m.geometry, SI = g.attributes.skinIndex, SW = g.attributes.skinWeight;
+  for (let i = 0; i < g.index.count; i++) if (despues[k][i] > antes[k][i] * 1.8 + 0.02) for (const v of [g.index.getX(i), g.index.getX(i % 3 === 2 ? i - 2 : i + 1)]) {
+    const d = []; for (let q = 0; q < 4; q++) if (SW.getComponent(v, q) > 0.05) d.push(m.skeleton.bones[SI.getComponent(v, q)].name.replace('Bone_', '') + ':' + SW.getComponent(v, q).toFixed(2));
+    const pos = [g.attributes.position.getX(v), g.attributes.position.getY(v), g.attributes.position.getZ(v)].map((n) => n.toFixed(2)).join(',');
+    cuenta[d.join(' ') + ' @' + pos] = (cuenta[d.join(' ') + ' @' + pos] || 0) + 1; } });
+console.log('ESTIRADOS ' + JSON.stringify(Object.entries(cuenta).sort((a, b) => b[1] - a[1]).slice(0, 25)));
+</script>

@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><script>window.DEPURA_PIEZAS = /piezas/.test(location.search);</script><script type="module">
+// Imprime en la consola el árbol de huesos de un animal con su posición (en fracciones del alto). ?a=ardilla
+import * as THREE from '../lib/three.min.js';
+import { _fuentes } from '../comun/personajes.js';
+const F = _fuentes[new URLSearchParams(location.search).get('a') || 'ardilla'];
+F.escena.updateMatrixWorld(true);
+const v = new THREE.Vector3(), L = [];
+const rec = (o, d) => { if (o.isBone) { o.getWorldPosition(v); L.push(' '.repeat(d) + o.name.replace('Bone_', '') + ` (${(v.x / F.alto).toFixed(2)}, ${((v.y - F.suelo) / F.alto).toFixed(2)}, ${(v.z / F.alto).toFixed(2)})`); } o.children.forEach((c) => rec(c, d + (o.isBone ? 1 : 0))); };
+rec(F.escena, 0);
+const M = []; F.escena.traverse((o) => { if (o.isMesh) M.push(o.name + ':' + o.geometry.attributes.position.count); });
+console.log('HUESOS ' + JSON.stringify({ mallas: M, huesos: L }));
+</script>

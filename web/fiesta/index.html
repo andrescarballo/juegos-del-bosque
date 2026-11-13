@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>La fiesta del bosque</title>
+<link rel="icon" href="../comun/icono.png">
+<link rel="stylesheet" href="../comun/estilo.css">
+<style>
+  #lienzo { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { pointer-events: none; }
+  #esc { z-index: 10; }
+  #panel .opciones > span, #panel [data-tap] { pointer-events: auto; cursor: pointer; padding: 10px 18px; border-radius: 999px; }
+  #panel .opciones > span:active { background: rgba(123,63,228,.12); }
+  .txt { color: #fff; -webkit-text-stroke: 14px var(--morado); paint-order: stroke fill; }
+
+  #fichas { position: absolute; top: 26px; left: 30px; display: flex; flex-direction: column; gap: 14px; }
+  .ficha { display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,.9); border-radius: 30px; padding: 10px 26px 10px 14px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.08); border: 6px solid transparent; transition: transform .2s, border-color .2s; min-width: 360px; }
+  .ficha.turno { border-color: var(--c); transform: translateX(14px) scale(1.04); }
+  .ficha .puesto { width: 58px; height: 58px; border-radius: 50%; background: var(--c); color: #fff; display: grid; place-items: center; font-size: 34px; flex: none; }
+  .ficha .nom { font-size: 36px; color: #4a3b6a; line-height: 1.05; }
+  .ficha .cuenta { font-size: 32px; color: #6a5a8a; white-space: nowrap; }
+  .ficha .cuenta b { color: var(--morado); }
+
+  #arriba { position: absolute; top: 22px; left: 0; right: 0; text-align: center; font-size: 64px; }
+  #arriba small { display: block; font-size: 40px; -webkit-text-stroke-width: 10px; }
+
+  #dado { position: absolute; left: 50%; top: 210px; width: 230px; height: 230px; margin-left: -115px; border-radius: 48px; background: #fff;
+    box-shadow: inset 0 -16px 0 rgba(90,40,140,.12), 0 16px 0 rgba(90,40,140,.18), 0 26px 50px rgba(90,40,140,.25);
+    display: none; place-items: center; font-size: 170px; color: var(--c, var(--morado)); border: 10px solid var(--c, var(--morado)); }
+  #dado.ver { display: grid; }
+  #dado.gira { animation: tiembla .12s linear infinite; }
+  #dado.para { animation: bota .45s cubic-bezier(.3,1.8,.5,1); }
+  @keyframes tiembla { 25% { transform: rotate(-6deg) scale(1.03); } 75% { transform: rotate(6deg) scale(.97); } }
+  @keyframes bota { from { transform: scale(1.5); } }
+
+  #mensaje { position: absolute; top: 470px; left: 0; right: 0; text-align: center; font-size: 96px; opacity: 0; transform: scale(.6); transition: all .25s cubic-bezier(.3,1.6,.5,1); }
+  #mensaje.ver { opacity: 1; transform: scale(1); }
+  #mensaje small { display: block; font-size: 52px; -webkit-text-stroke-width: 10px; }
+  #ayuda { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font-size: 38px; color: #4a3b6a; }
+  #ayuda > span { background: rgba(255,255,255,.88); padding: 12px 34px; border-radius: 999px; }
+  #ayuda:empty { display: none; }
+
+  #panel {
+    position: absolute; left: 50%; top: 50%; width: 1180px; padding: 46px 60px 52px;
+    transform: translate(-50%, -50%) scale(.8); opacity: 0; transition: all .25s cubic-bezier(.3,1.5,.5,1);
+    background: rgba(255,255,255,.95); border-radius: 64px; text-align: center; color: var(--morado);
+    box-shadow: 0 18px 0 rgba(90,40,140,.15), 0 30px 60px rgba(90,40,140,.25);
+  }
+  #panel.ver { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  #panel h2 { margin: 0 0 18px; font-size: 84px; line-height: 1; }
+  #panel p { margin: 12px 0; font-size: 44px; color: #5a4a7a; line-height: 1.3; }
+  #panel .opciones { margin-top: 30px; font-size: 44px; display: flex; justify-content: center; gap: 36px; color: #5a4a7a; white-space: nowrap; }
+  #panel .rondas { font-size: 60px; color: var(--morado); margin: 20px 0 0; }
+  #panel .rondas b { display: inline-block; min-width: 2.2ch; background: rgba(123,63,228,.1); border-radius: 20px; padding: 0 16px; }
+  .chip { display: inline-flex; align-items: center; gap: 14px; background: #fff; color: #4a3b6a; font-size: 44px;
+    padding: 8px 26px 8px 14px; border-radius: 999px; box-shadow: 0 6px 0 rgba(0,0,0,.08); white-space: nowrap; border: 4px solid var(--c); }
+  .chip i { width: 28px; height: 28px; border-radius: 50%; background: var(--c); flex: none; }
+  .chip .mas { color: #2fa84a; }
+  .tabla { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 16px 0 6px; }
+
+  #ruleta { display: flex; justify-content: center; gap: 14px; margin: 24px 0 10px; }
+  .carta { width: 138px; height: 196px; border-radius: 28px; background: var(--c); color: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 23px; line-height: 1.1; padding: 8px; text-align: center; transition: transform .1s, opacity .1s; opacity: .45; }
+  .carta span { font-size: 72px; line-height: 1.2; }
+  .carta.sel { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 8px #fff, 0 0 0 16px var(--c); }
+
+  #flotantes { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .flota { position: absolute; font-size: 6vmin; transform: translate(-50%, -50%); animation: sube 1.4s ease-out forwards; white-space: nowrap; }
+  @keyframes sube { to { transform: translate(-50%, -190%) scale(1.15); opacity: 0; } }
+  @keyframes late { to { transform: scale(1.08); } }
+  #fps { position: absolute; bottom: 20px; right: 30px; font: 500 28px ui-monospace, monospace; color: #fff; background: rgba(0,0,0,.35); padding: 4px 14px; border-radius: 10px; display: none; }
+</style>
+</head>
+<body>
+<canvas id="lienzo"></canvas>
+<div id="flotantes" class="hud"></div>
+<div class="escenario hud" id="esc">
+  <div id="fichas"></div>
+  <div id="arriba" class="txt"></div>
+  <div id="dado"></div>
+  <div id="mensaje" class="txt"></div>
+  <div id="ayuda"></div>
+  <div id="panel"></div>
+  <div id="fps"></div>
+</div>
+<script type="module" src="juego.js"></script>
+</body>
+</html>

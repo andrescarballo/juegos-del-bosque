@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Probar el mando</title>
+<link rel="icon" href="../comun/icono.png">
+<link rel="stylesheet" href="../comun/estilo.css">
+<style>
+  body { background: linear-gradient(#ffcf7a, #ffd3f1 70%, #fff0b3); }
+  h1 { position: absolute; top: 40px; width: 100%; text-align: center; margin: 0; font-size: 90px; color: #b0640a; -webkit-text-stroke: 18px #fff; paint-order: stroke fill; }
+  svg#m { position: absolute; left: 260px; top: 170px; width: 1400px; height: 760px; }
+  .b { transition: transform .06s; transform-box: fill-box; transform-origin: center; }
+  .b.on { transform: scale(.86); filter: brightness(1.35) drop-shadow(0 0 14px #fff); }
+  #info { position: absolute; left: 0; right: 0; bottom: 40px; text-align: center; font-size: 34px; color: #5a4a7a; }
+  #info b { color: #7b3fe4; }
+  #nums { font-family: ui-monospace, monospace; font-size: 26px; font-weight: 500; margin-top: 8px; }
+  #volver { position: absolute; top: 60px; left: 60px; font-size: 30px; color: #5a4a7a; background: rgba(255,255,255,.8); padding: 10px 24px; border-radius: 999px; }
+  #barra { height: 8px; border-radius: 4px; background: #ff4d4d; width: 0; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="escenario" id="esc">
+  <h1>Probar el mando</h1>
+  <div id="volver">Mantén <span class="boton-a boton-b">B</span> para volver<div id="barra"></div></div>
+  <svg id="m" viewBox="0 0 1400 760">
+    <!-- gatillos -->
+    <rect x="250" y="30" width="200" height="40" rx="20" fill="#e6e0f0"/><rect id="lt" x="250" y="30" width="0" height="40" rx="20" fill="#7b3fe4"/>
+    <rect x="950" y="30" width="200" height="40" rx="20" fill="#e6e0f0"/><rect id="rt" x="950" y="30" width="0" height="40" rx="20" fill="#7b3fe4"/>
+    <text x="350" y="62" font-size="28" text-anchor="middle" fill="#5a4a7a">LT</text><text x="1050" y="62" font-size="28" text-anchor="middle" fill="#5a4a7a">RT</text>
+    <rect class="b" id="b4" x="230" y="90" width="240" height="56" rx="28" fill="#8d86a8"/><text x="350" y="128" font-size="30" text-anchor="middle" fill="#fff" pointer-events="none">LB</text>
+    <rect class="b" id="b5" x="930" y="90" width="240" height="56" rx="28" fill="#8d86a8"/><text x="1050" y="128" font-size="30" text-anchor="middle" fill="#fff" pointer-events="none">RB</text>
+    <!-- cuerpo -->
+    <path d="M330 170 Q700 120 1070 170 Q1240 200 1300 430 Q1360 690 1190 720 Q1080 735 1000 610 L400 610 Q320 735 210 720 Q40 690 100 430 Q160 200 330 170 Z" fill="#fff" stroke="#e6e0f0" stroke-width="10"/>
+    <!-- sticks -->
+    <circle cx="380" cy="330" r="92" fill="#ece7f5"/><circle id="ls" class="b" cx="380" cy="330" r="62" fill="#4a4060"/>
+    <circle cx="860" cy="500" r="92" fill="#ece7f5"/><circle id="rs" class="b" cx="860" cy="500" r="62" fill="#4a4060"/>
+    <!-- cruceta -->
+    <rect class="b" id="b12" x="505" y="410" width="70" height="80" rx="12" fill="#4a4060"/>
+    <rect class="b" id="b13" x="505" y="560" width="70" height="80" rx="12" fill="#4a4060"/>
+    <rect class="b" id="b14" x="425" y="490" width="80" height="70" rx="12" fill="#4a4060"/>
+    <rect class="b" id="b15" x="575" y="490" width="80" height="70" rx="12" fill="#4a4060"/>
+    <!-- centrales -->
+    <circle class="b" id="b8" cx="600" cy="320" r="26" fill="#8d86a8"/><circle class="b" id="b9" cx="800" cy="320" r="26" fill="#8d86a8"/>
+    <circle class="b" id="b16" cx="700" cy="240" r="38" fill="#3dbb4c"/>
+    <!-- ABXY -->
+    <circle class="b" id="b3" cx="1030" cy="250" r="48" fill="#ffc531"/><text x="1030" y="266" font-size="46" text-anchor="middle" fill="#fff" pointer-events="none">Y</text>
+    <circle class="b" id="b1" cx="1130" cy="340" r="48" fill="#ff4d4d"/><text x="1130" y="356" font-size="46" text-anchor="middle" fill="#fff" pointer-events="none">B</text>
+    <circle class="b" id="b2" cx="930" cy="340" r="48" fill="#3aa0ff"/><text x="930" y="356" font-size="46" text-anchor="middle" fill="#fff" pointer-events="none">X</text>
+    <circle class="b" id="b0" cx="1030" cy="430" r="48" fill="#3dbb4c"/><text x="1030" y="446" font-size="46" text-anchor="middle" fill="#fff" pointer-events="none">A</text>
+  </svg>
+  <div id="info"><div id="fuente"></div><div id="nums"></div></div>
+</div>
+<script type="module">
+import { pad } from '../comun/pad.js';
+import { suena } from '../comun/sonido.js';
+import { escenario, volverAlMenu } from '../comun/tv.js';
+
+escenario(document.getElementById('esc'));
+const $ = (id) => document.getElementById(id);
+const FUENTE = { tele: 'la app de la tele', navegador: 'el navegador (Gamepad API)', teclado: 'el teclado' };
+let bDesde = 0;
+
+function bucle(now) {
+  pad.update();
+  for (let i = 0; i <= 16; i++) {
+    const el = $('b' + i);
+    if (el) el.classList.toggle('on', pad.buttons[i]);
+    if (pad.pressed(Object.keys({A:0,B:1,X:2,Y:3})[i] || '_')) suena('toque', i * 3);
+  }
+  $('ls').setAttribute('cx', 380 + pad.lx * 30); $('ls').setAttribute('cy', 330 + pad.ly * 30);
+  $('rs').setAttribute('cx', 860 + pad.rx * 30); $('rs').setAttribute('cy', 500 + pad.ry * 30);
+  $('ls').classList.toggle('on', pad.buttons[10]); $('rs').classList.toggle('on', pad.buttons[11]);
+  $('lt').setAttribute('width', 200 * pad.lt); $('rt').setAttribute('width', 200 * pad.rt);
+  const nMoviles = window.NativePad && window.NativePad.moviles ? window.NativePad.moviles() : 0;
+  $('fuente').innerHTML = (nMoviles ? `📱 ${nMoviles} ${nMoviles === 1 ? 'móvil' : 'móviles'} como mando · ` : '') + (pad.connected
+    ? `Mando leído desde <b>${FUENTE[pad.source]}</b>${pad.name ? ' · ' + pad.name : ''}`
+    : (pad.source === 'tele' ? 'La app de la tele aún no ha visto el mando: <b>pulsa cualquier botón</b>' : 'No veo ningún mando: <b>pulsa un botón</b> (o usa el teclado)'));
+  const f = (v) => (v >= 0 ? '+' : '') + v.toFixed(2);
+  $('nums').textContent = `izq ${f(pad.lx)} ${f(pad.ly)}   der ${f(pad.rx)} ${f(pad.ry)}   gatillos ${pad.lt.toFixed(2)} ${pad.rt.toFixed(2)}`;
+
+  if (pad.down('B')) { bDesde = bDesde || now; } else bDesde = 0;
+  const p = bDesde ? Math.min(1, (now - bDesde) / 1500) : 0;
+  $('barra').style.width = (p * 100) + '%';
+  if (p >= 1) { volverAlMenu(); return; }
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+</script>
+</body>
+</html>

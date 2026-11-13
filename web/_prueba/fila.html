@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Los nueve en fila</title>
+<style>html, body { margin: 0; background: #bfe6ff; overflow: hidden; font-family: sans-serif; } canvas { display: block; }
+#ayuda { position: fixed; left: 0; right: 0; bottom: 12px; text-align: center; color: #4a3b6a; font-size: 18px; }</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ayuda">Los nueve animales con su tamaño de juego · <b>Espacio</b>: especial · <b>C</b>: correr / parar (para ver el frenazo) · <b>S</b>: saltar · ?estacion=0..3</div>
+<script type="module">
+// Para revisar tamaños y animaciones de todos a la vez (no va en el menú).
+import * as THREE from '../lib/three.min.js';
+import { crearPersonaje, animarPersonaje, especial, poder, nombreEspecial } from '../comun/personajes.js';
+import { ANIMALES } from '../comun/perfiles.js';
+import { vestir } from '../comun/estaciones.js';
+const q = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+const escena = new THREE.Scene();
+escena.background = new THREE.Color('#bfe6ff');
+escena.add(new THREE.HemisphereLight('#e6f4ff', '#a6dd84', 1.9));
+const sol = new THREE.DirectionalLight('#fff0dc', 2.2); sol.position.set(-3, 6, 4); escena.add(sol);
+const suelo = new THREE.Mesh(new THREE.PlaneGeometry(200, 60), new THREE.MeshLambertMaterial({ color: '#86d860' }));
+suelo.rotation.x = -Math.PI / 2; escena.add(suelo);
+const camara = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+const ajustar = () => { renderer.setSize(innerWidth, innerHeight); camara.aspect = innerWidth / innerHeight; camara.updateProjectionMatrix(); };
+addEventListener('resize', ajustar); ajustar();
+const LISTA = q.get('solo') ? ANIMALES.filter((a) => a.id === q.get('solo')) : ANIMALES;   // ?solo=ardilla
+const SEP = 1.75, N = LISTA.length;
+const pjs = LISTA.map((a, i) => {
+  const p = crearPersonaje(THREE, { animal: a.id, pelo: 'natural', accesorio: 'nada' });
+  p.x0 = (i - (N - 1) / 2) * SEP; p.z = 0; p.y = 0; p.vy = 0; p.corre = 0;
+  p.g.rotation.y = q.has('frente') ? (parseFloat(q.get('frente')) || 0) : Math.PI / 2;
+  escena.add(p.g);
+  return p;
+});
+vestir(THREE, escena, { lejos: 20 });
+let correr = q.has('corre'), salto = false, t0 = performance.now(), x = 0;
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') pjs.forEach((p) => especial(p));
+  if (e.code === 'KeyC') correr = !correr;
+  if (e.code === 'KeyS') salto = true;
+});
+if (q.has('esp') && !q.has('foto')) setTimeout(() => pjs.forEach((p) => especial(p)), 300);
+function paso(dt) {
+  for (const p of pjs) {
+    const pw = poder(p);
+    p.corre += ((correr ? 5.2 : 0) * pw.vel - p.corre) * Math.min(1, dt * (correr ? 4 : 30));
+    p.z += p.corre * dt;
+    if ((salto || pw.salto) && (p.y === 0 || pw.salto)) p.vy = 9 * (pw.salto || 1);
+    p.vy -= 24 * dt * (p.vy < 0 ? pw.grav : 1); p.y = Math.max(0, p.y + p.vy * dt); if (p.y === 0) p.vy = 0;
+    p.g.position.set(q.has('frente') ? p.x0 : p.x0 + p.z, p.y, 0);
+    animarPersonaje(p, { paso: 0, suelo: p.y < 0.02, aplasta: 0, dt });
+  }
+  salto = false;
+  const cx = q.has('frente') ? 0 : pjs.reduce((s, p) => s + p.z, 0) / N;
+  if (N === 1) { const v = parseFloat(q.get('vista') || '0'); camara.position.set(cx + Math.sin(v) * 5, 1.3 + (parseFloat(q.get('alto') || '0')), Math.cos(v) * 5); camara.lookAt(cx, 0.6, 0); } else { camara.position.set(cx, 1.9, 19); camara.lookAt(cx, 0.8, 0); }
+}
+function bucle(now) {
+  const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
+  paso(dt);
+  renderer.render(escena, camara);
+  requestAnimationFrame(bucle);
+}
+// ?foto=1.2 -> avanza ese tiempo de golpe y se queda quieto (para capturas); con ?esp, el especial empieza en 0,1 s
+if (q.has('foto')) {
+  const T = parseFloat(q.get('foto')) || 1;
+  for (let t = 0, hecho = false; t < T; t += 1 / 60) { if (q.has('esp') && !hecho && t > 0.1) { hecho = true; pjs.forEach((p) => especial(p)); } paso(1 / 60); }
+  const quieto = () => { renderer.render(escena, camara); requestAnimationFrame(quieto); };
+  quieto();
+} else requestAnimationFrame(bucle);
+window.pjs = pjs;
+</script>
+</body>
+</html>

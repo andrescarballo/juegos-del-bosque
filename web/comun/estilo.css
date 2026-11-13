@@ -1,0 +1,41 @@
+@font-face { font-family: 'Fredoka'; font-weight: 500; font-display: block; src: url('fredoka-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Fredoka'; font-weight: 700; font-display: block; src: url('fredoka-latin-700-normal.woff2') format('woff2'); }
+
+:root {
+  --morado: #7b3fe4;
+  --rosa: #ff4d8d;
+  --cielo-1: #7fd0ff;
+  --cielo-2: #ffd3f1;
+  --cielo-3: #fff0b3;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--cielo-1);
+  font-family: 'Fredoka', system-ui, sans-serif; font-weight: 700;
+  -webkit-user-select: none; user-select: none; cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Escenario fijo de 1920x1080 que se escala a la pantalla */
+.escenario {
+  position: absolute; left: 50%; top: 50%;
+  width: 1920px; height: 1080px;
+  transform-origin: 50% 50%;
+}
+
+.contorno {
+  -webkit-text-stroke: 0; paint-order: stroke fill;
+  text-shadow: 0 6px 0 rgba(90, 30, 140, .18);
+}
+
+.boton-a {
+  display: inline-grid; place-items: center;
+  width: 1.5em; height: 1.5em; border-radius: 50%;
+  background: #3dbb4c; color: #fff; font-size: .8em; vertical-align: .08em;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.18);
+  -webkit-text-stroke: 0; text-shadow: none; line-height: 1;
+}
+.boton-b { background: #ff4d4d; }
+.boton-start { border-radius: 999px; width: auto; padding: 0 .6em; background: #6a6a7a; }

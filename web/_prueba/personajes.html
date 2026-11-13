@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Hoja de personajes</title>
+<style>html, body { margin: 0; background: #bfe6ff; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+// Hoja de personajes para revisarlos (no va en el menú). ?pelo=capas para comparar con el pelo antiguo.
+import * as THREE from '../lib/three.min.js';
+import { crearPersonaje } from '../comun/personajes.js';
+import { ANIMALES } from '../comun/perfiles.js';
+const W = 1500, H = 1200;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setSize(W, H);
+renderer.setScissorTest(true);
+const escena = new THREE.Scene();
+escena.add(new THREE.HemisphereLight('#e6f4ff', '#a6dd84', 1.9));
+const sol = new THREE.DirectionalLight('#fff0dc', 2.2); sol.position.set(-3, 6, 4); escena.add(sol);
+const camara = new THREE.PerspectiveCamera(30, (W / 3) / (H / 3), 0.1, 50);
+const lista = ANIMALES.map((a) => a.id);
+const pjs = lista.map((id) => { const p = crearPersonaje(THREE, { animal: id, pelo: 'natural', accesorio: 'nada' }); p.g.visible = false; escena.add(p.g); return p; });
+const giro = parseFloat(new URLSearchParams(location.search).get('giro') || '0.6');
+pjs.forEach((p, i) => {
+  const col = i % 3, fila = Math.floor(i / 3);
+  const x = col * (W / 3), y = H - (fila + 1) * (H / 3);
+  renderer.setViewport(x, y, W / 3, H / 3); renderer.setScissor(x, y, W / 3, H / 3);
+  renderer.setClearColor(i % 2 ? '#c8ebff' : '#bfe6ff');
+  pjs.forEach((q) => { q.g.visible = q === p; });
+  p.g.rotation.y = giro;
+  camara.position.set(0, 1.2, 4.6); camara.lookAt(0, 0.75, 0);
+  renderer.render(escena, camara);
+});
+window.listo = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><script type="module">
+import * as THREE from '../lib/three.min.js';
+import { crearPersonaje, animarPersonaje } from '../comun/personajes.js';
+import { ANIMALES } from '../comun/perfiles.js';
+const out = {};
+for (const v of [2.5, 5.2, 7]) for (const a of ANIMALES) {
+  const p = crearPersonaje(THREE, { animal: a.id }); let x = 0; const f0 = p._.fase;
+  for (let i = 0; i < 180; i++) { x += v / 60; p.g.position.x = x; animarPersonaje(p, { suelo: true, dt: 1 / 60 }); }
+  const f1 = p._.fase; for (let i = 0; i < 60; i++) { x += v / 60; p.g.position.x = x; animarPersonaje(p, { suelo: true, dt: 1 / 60 }); }
+  (out[a.id] = out[a.id] || []).push(`v${v}: ${((p._.fase - f1) / 6.283).toFixed(2)} pasos/s run=${p._.run.toFixed(2)} pata=${(p._.legLen * p._.s).toFixed(2)}`);
+}
+console.log('MEDIDA ' + JSON.stringify(out, null, 0));
+</script>

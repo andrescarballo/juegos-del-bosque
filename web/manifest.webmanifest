@@ -1,0 +1,10 @@
+{
+  "name": "Juegos del bosque",
+  "short_name": "Juegos del bosque",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#7fd0ff",
+  "theme_color": "#7fd0ff",
+  "icons": [{ "src": "comun/icono.png", "sizes": "512x512", "type": "image/png" }]
+}

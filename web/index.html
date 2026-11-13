@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#7fd0ff">
+<title>Juegos del bosque</title>
+<link rel="icon" href="comun/icono.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="comun/estilo.css">
+<style>
+  body { background: #8fd3ff; }
+  #fondo { position: absolute; inset: 0; }
+  h1 {
+    position: absolute; top: 26px; left: 60px; margin: 0; font-size: 84px; letter-spacing: 1px; color: var(--morado);
+    -webkit-text-stroke: 20px #fff; paint-order: stroke fill; display: flex; align-items: center; gap: 22px;
+  }
+  h1 img { width: 96px; height: 96px; border-radius: 26px; box-shadow: 0 6px 0 rgba(60,30,90,.15); }
+
+  .pastilla {
+    position: absolute; top: 44px; display: flex; align-items: center; gap: 12px; text-decoration: none;
+    background: rgba(255,255,255,.88); color: #5a4a7a; font-size: 28px; padding: 10px 26px; border-radius: 999px;
+    transition: transform .15s cubic-bezier(.3,1.6,.5,1);
+  }
+  #estado { right: 56px; }
+  #ajustes { right: 400px; font-size: 30px; padding: 10px 28px 10px 18px; }
+  #ajustes.sel { transform: scale(1.14); background: #fff; box-shadow: 0 0 0 8px rgba(255,255,255,.6), 0 10px 24px rgba(80,30,120,.25); color: var(--morado); }
+  #estado i { width: 18px; height: 18px; border-radius: 50%; background: #c9c3d6; display: inline-block; }
+  #estado.ok i { background: #3dbb4c; box-shadow: 0 0 0 6px rgba(61,187,76,.2); }
+
+  /* La fiesta: un cartel ancho aparte, porque es "un poco de todo" */
+  #fiesta {
+    position: absolute; top: 138px; left: 60px; width: 1800px; height: 214px; border-radius: 46px; overflow: hidden;
+    color: #fff; text-decoration: none; background: #ff9f1c;
+    box-shadow: 0 12px 0 rgba(0,0,0,.14), 0 22px 36px rgba(80,30,120,.2);
+    transition: transform .18s cubic-bezier(.3,1.6,.5,1), box-shadow .18s;
+  }
+  #fiesta .foto { position: absolute; right: 0; top: 0; bottom: 0; width: 1000px; background: url(caratulas/fiesta.jpg) center / cover; }
+  #fiesta .foto::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #ff9f1c 0%, rgba(255,159,28,.75) 22%, rgba(255,159,28,0) 60%); }
+  #fiesta .dado { position: absolute; left: 44px; top: 27px; width: 160px; height: 160px; }
+  #fiesta .dado svg { width: 100%; height: 100%; overflow: visible; }
+  #fiesta.sel .dado svg { animation: dado 1.4s ease-in-out infinite; }
+  @keyframes dado { 25% { transform: rotate(-10deg) translateY(-8px); } 75% { transform: rotate(10deg) translateY(-8px); } }
+  #fiesta .letras { position: absolute; left: 236px; top: 0; bottom: 0; width: 900px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+  #fiesta b { font-size: 70px; line-height: 1; -webkit-text-stroke: 14px #b35f00; paint-order: stroke fill; }
+  #fiesta span.d { font-size: 32px; font-weight: 500; -webkit-text-stroke: 8px #b35f00; paint-order: stroke fill; }
+  #fiesta .chapa { position: absolute; right: 30px; bottom: 24px; background: #fff; color: #b35f00; font-size: 28px; padding: 8px 24px; border-radius: 999px; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
+  #fiesta.sel { transform: scale(1.025); box-shadow: 0 0 0 12px #fff, 0 0 0 20px rgba(255,255,255,.4), 0 30px 50px rgba(80,30,120,.3); z-index: 2; }
+
+  /* El estante de juegos: dos filas de carátulas con una captura de verdad de cada juego */
+  #estante { position: absolute; top: 378px; left: 60px; width: 1800px; display: grid; grid-template-columns: repeat(5, 344px); grid-auto-rows: 208px; gap: 18px 20px; }
+  .juego {
+    position: relative; border-radius: 34px; overflow: hidden; text-decoration: none; color: #fff;
+    background: var(--c); box-shadow: 0 9px 0 rgba(0,0,0,.13), 0 16px 28px rgba(80,30,120,.18);
+    transition: transform .18s cubic-bezier(.3,1.6,.5,1), box-shadow .18s;
+  }
+  .juego .foto { position: absolute; inset: 0; background: var(--foto) center / cover; }
+  .juego .foto::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: linear-gradient(transparent, var(--c) 78%); }
+  .juego .titulo {
+    position: absolute; left: 12px; right: 12px; bottom: 10px; text-align: center;
+    font-size: 36px; line-height: 1.05; -webkit-text-stroke: 9px var(--oscuro); paint-order: stroke fill;
+  }
+  .juego .record { position: absolute; left: 10px; top: 10px; background: rgba(255,255,255,.92); color: var(--oscuro); font-size: 22px; padding: 3px 14px; border-radius: 999px; }
+  .juego:nth-child(5n+1) { transform-origin: 10% 50%; }
+  .juego:nth-child(5n) { transform-origin: 90% 50%; }
+  .juego.sel { transform: scale(1.12); box-shadow: 0 0 0 10px #fff, 0 0 0 17px rgba(255,255,255,.4), 0 26px 44px rgba(80,30,120,.32); z-index: 2; }
+  .salta { animation: salta .25s; }
+  @keyframes salta { 50% { transform: scale(1.18); } }
+  #fiesta.salta { animation: saltaF .25s; }
+  @keyframes saltaF { 50% { transform: scale(1.05); } }
+
+  #info { position: absolute; top: 834px; left: 0; right: 0; text-align: center; }
+  body:has(#movil.ver) #info { left: 720px; right: 40px; }
+  body:has(#movil.ver) #info span { font-size: 32px; padding: 10px 30px; }
+  #info span { display: inline-block; background: rgba(255,255,255,.92); color: #4a3b6a; font-size: 38px; font-weight: 500; padding: 10px 40px; border-radius: 999px; box-shadow: 0 8px 0 rgba(90,40,140,.1); }
+  #pie {
+    position: absolute; bottom: 58px; left: 0; right: 0; text-align: center;
+    font-size: 38px; color: var(--morado); -webkit-text-stroke: 11px #fff; paint-order: stroke fill;
+  }
+  /* con el QR del móvil a la izquierda, el texto se centra en el hueco que queda a su derecha */
+  body:has(#movil.ver) #pie { left: 720px; right: 40px; }
+  #movil {
+    position: absolute; left: 44px; bottom: 22px; display: none; align-items: center; gap: 22px;
+    background: rgba(255,255,255,.92); border-radius: 34px; padding: 14px 30px 14px 14px; color: #5a4a7a;
+    font-size: 26px; line-height: 1.3; box-shadow: 0 10px 0 rgba(90,40,140,.12);
+  }
+  #movil.ver { display: flex; }
+  #qr { width: 140px; height: 140px; border-radius: 16px; overflow: hidden; background: #fff; }
+  #qr svg { width: 100%; height: 100%; display: block; }
+  #movil b { color: var(--morado); font-size: 32px; }
+  #movil code { font: 500 22px ui-monospace, monospace; color: #7a6a9a; }
+</style>
+</head>
+<body>
+<div class="escenario" id="esc">
+  <canvas id="fondo" width="1920" height="1080"></canvas>
+  <h1><img src="comun/icono.png" alt=""><span id="nombreApp">Juegos del bosque</span></h1>
+  <a id="ajustes" class="pastilla" href="ajustes/index.html"><span style="font-size:36px">⚙️</span>Ajustes</a>
+  <div id="estado" class="pastilla"><i></i><span>Buscando mando…</span></div>
+  <a id="fiesta" href="jugadores/index.html#fiesta">
+    <div class="foto"></div>
+    <div class="dado"><svg viewBox="0 0 160 160">
+      <g transform="rotate(-10 80 80)"><rect x="22" y="22" width="116" height="116" rx="26" fill="#fff" stroke="#b35f00" stroke-width="9"/>
+        <g fill="#7b3fe4"><circle cx="52" cy="52" r="12"/><circle cx="108" cy="52" r="12"/><circle cx="80" cy="80" r="12"/><circle cx="52" cy="108" r="12"/><circle cx="108" cy="108" r="12"/></g></g>
+      <polygon points="134,4 141,24 162,24 145,37 151,57 134,45 117,57 123,37 106,24 127,24" fill="#ffe14d" stroke="#b35f00" stroke-width="5" stroke-linejoin="round"/>
+    </svg></div>
+    <div class="letras"><b id="fTitulo"></b><span class="d" id="fDesc"></span></div>
+    <div class="chapa">2 a 4 jugadores</div>
+  </a>
+  <div id="estante"></div>
+  <div id="info"><span></span></div>
+  <div id="pie">Elige con la cruceta y pulsa <span class="boton-a">A</span></div>
+  <div id="movil"><div id="qr"></div><div><b>Usa el móvil como mando</b><br><span id="qrN">Escanéalo con la cámara</span><br><code id="qrUrl"></code></div></div>
+</div>
+
+<script type="module">
+import { pad } from './comun/pad.js';
+import { suena } from './comun/sonido.js';
+import { escenario, records, alPulsarAtras } from './comun/tv.js';
+import { esTactil } from './comun/tactil.js';
+import qrcode from './lib/qr.js';
+import { leerPerfiles } from './comun/perfiles.js';
+import { siguienteEstacion, estacionActual, modoEstacion } from './comun/estaciones.js';
+import { JUEGOS, FIESTA } from './comun/juegos.js';
+
+escenario(document.getElementById('esc'));
+alPulsarAtras(() => false); // en el menú, "atrás" sale de la app
+
+// La estación con la que se va a jugar (cambia al abrir cada juego, si en Ajustes está en "va cambiando")
+const EST = modoEstacion() === 'rota' ? (estacionActual() + 1) % 4 : estacionActual();
+
+// ---------- Fiesta y estante ----------
+const fiesta = document.getElementById('fiesta');
+document.getElementById('fTitulo').textContent = FIESTA.titulo;
+document.getElementById('fDesc').textContent = FIESTA.desc;
+const estante = document.getElementById('estante'), info = document.getElementById('info');
+const tarjetas = JUEGOS.map((j, i) => {
+  const a = document.createElement('a');
+  a.className = 'juego';
+  a.style.setProperty('--c', j.c); a.style.setProperty('--oscuro', j.oscuro); a.style.setProperty('--foto', `url(caratulas/${j.id}.jpg)`);
+  a.href = `jugadores/index.html#${j.id}`;
+  const rec = Math.max(records.leer(j.id), ...leerPerfiles().map((p) => (p.records && p.records[j.id]) || 0));
+  a.innerHTML = `<div class="foto"></div>${rec ? `<div class="record">★ ${rec}</div>` : ''}<div class="titulo">${j.titulo}</div>`;
+  a.addEventListener('mouseenter', () => ir('juegos', i));
+  a.addEventListener('click', (e) => { e.preventDefault(); ir('juegos', i); abrir(); });
+  estante.appendChild(a);
+  return a;
+});
+fiesta.addEventListener('mouseenter', () => ir('fiesta'));
+fiesta.addEventListener('click', (e) => { e.preventDefault(); ir('fiesta'); abrir(); });
+const botonAjustes = document.getElementById('ajustes');
+botonAjustes.addEventListener('mouseenter', () => ir('ajustes'));
+botonAjustes.addEventListener('click', (e) => { e.preventDefault(); ir('ajustes'); abrir(); });
+
+const COLS = 5;
+// Dónde está el cursor: 'ajustes' (arriba), 'fiesta' (el cartel) o 'juegos' (el estante, con sel)
+const guardado = (() => { try { return sessionStorage.getItem('menu.sel'); } catch (e) { return null; } })();
+let zona = guardado === 'fiesta' ? 'fiesta' : 'juegos';
+let sel = Math.max(0, JUEGOS.findIndex((j) => j.id === guardado));
+function ir(z, i = sel, sonido = true) {
+  i = (i + JUEGOS.length) % JUEGOS.length;
+  const cambia = z !== zona || i !== sel;
+  zona = z; sel = i;
+  botonAjustes.classList.toggle('sel', zona === 'ajustes');
+  fiesta.classList.toggle('sel', zona === 'fiesta');
+  tarjetas.forEach((t, k) => t.classList.toggle('sel', zona === 'juegos' && k === sel));
+  const j = JUEGOS[sel];
+  info.firstChild.textContent = zona === 'juegos' ? j.desc + (j.jugadores ? ` · ${j.jugadores}` : '') : zona === 'fiesta' ? 'Por turnos: dado, tablero, bellotas y minijuegos de todos los juegos' : 'Probar el mando, la música y la estación';
+  try { if (zona !== 'ajustes') sessionStorage.setItem('menu.sel', zona === 'fiesta' ? 'fiesta' : j.id); } catch (e) { /* nada */ }
+  if (sonido && cambia) suena('mover');
+}
+ir(zona, sel, false);
+if (esTactil) document.getElementById('pie').textContent = 'Toca un juego para jugar';
+
+function abrir() {
+  suena('elegir');
+  if (zona === 'ajustes') { setTimeout(() => { location.href = botonAjustes.href; }, 150); return; }
+  siguienteEstacion();   // cada juego que se abre, la estación siguiente (si en Ajustes está en "va cambiando")
+  const t = zona === 'fiesta' ? fiesta : tarjetas[sel];
+  t.classList.add('salta');
+  setTimeout(() => { location.href = t.href; }, 220);
+}
+
+// ---------- Fondo: un claro del bosque de verdad en la estación que toca (web/fondos/<n>.jpg, hechos con
+// _prueba/fondo.html) y, por delante, sus pétalos, hojas o copos cayendo ----------
+document.getElementById('esc').style.background = `url(fondos/${EST}.jpg) center / cover`;
+const cv = document.getElementById('fondo'), g = cv.getContext('2d');
+const CAE = [['#f9b8cf', '#fde4ee', '#ffffff'], ['#9bd06a', '#7fbf55'], ['#e2622b', '#f0a030', '#d9432b', '#f2c744'], ['#ffffff', '#f2f7fc']][EST];
+const caen = Array.from({ length: EST === 1 ? 12 : 40 }, (_, i) => ({ x: Math.random() * 1920, y: Math.random() * 1080, v: 40 + Math.random() * 50, f: Math.random() * 6, r: 9 + Math.random() * 9, c: CAE[i % CAE.length] }));
+function pintarFondo(t, dt) {
+  g.clearRect(0, 0, 1920, 1080);
+  for (const p of caen) {
+    p.y += p.v * dt; p.x += (30 + Math.sin(t * 1.2 + p.f) * 40) * dt;
+    if (p.y > 1100) { p.y = -20; p.x = Math.random() * 1920; }
+    if (p.x > 1940) p.x = -20;
+    g.save(); g.translate(p.x, p.y); g.rotate(t * 1.5 + p.f); g.scale(1, 0.55 + 0.45 * Math.sin(t * 2.3 + p.f));
+    g.fillStyle = p.c; g.globalAlpha = 0.9; g.beginPath();
+    if (EST === 3) g.arc(0, 0, p.r * 0.55, 0, 7);
+    else { g.moveTo(0, -p.r); g.quadraticCurveTo(p.r * 0.9, -p.r * 0.2, 0, p.r); g.quadraticCurveTo(-p.r * 0.9, -p.r * 0.2, 0, -p.r); }
+    g.fill(); g.restore();
+  }
+  g.globalAlpha = 1;
+}
+
+// QR para usar el móvil como mando (solo dentro de la app de la tele, que hace de servidor en la wifi)
+const NP = window.NativePad || window.MandoWeb;   // app de la tele, o receptor WebRTC en la web
+let qrUrl = '';
+function pintarQR() {
+  try {
+    const url = NP && NP.movilUrl ? String(NP.movilUrl() || '') : '';
+    const panel = document.getElementById('movil');
+    if (!url) { panel.classList.remove('ver'); return; }
+    if (url !== qrUrl) {
+      const q = qrcode(0, 'M');
+      q.addData(url);
+      q.make();
+      document.getElementById('qr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      document.getElementById('qrUrl').textContent = url.replace(/^https?:\/\//, '').replace(/\/movil\/.*$/, '').replace(/\/$/, '');
+      qrUrl = url;
+    }
+    const n = NP.moviles ? NP.moviles() : 0;
+    document.getElementById('qrN').textContent = n ? `${n} ${n === 1 ? 'móvil conectado' : 'móviles conectados'}` : 'Escanéalo con la cámara (misma wifi)';
+    panel.classList.add('ver');
+  } catch (e) { /* sin QR, sin drama */ }
+}
+pintarQR();
+setInterval(pintarQR, 1500);
+
+const estado = document.getElementById('estado');
+let antes = performance.now();
+function bucle(now) {
+  const dt = Math.max(0, Math.min(0.05, (now - antes) / 1000));   // el primer fotograma puede llegar con tiempo negativo
+  antes = now;
+  pad.update();
+  const d = pad.nav(now);
+  if (zona === 'ajustes') { if (d === 'down' || d === 'left') ir('fiesta'); }
+  else if (zona === 'fiesta') { if (d === 'up' || d === 'right') ir('ajustes'); if (d === 'down') ir('juegos'); }
+  else {
+    if (d === 'left') ir('juegos', sel - 1);
+    if (d === 'right') ir('juegos', sel + 1);
+    if (d === 'up') { if (sel - COLS >= 0) ir('juegos', sel - COLS); else ir('fiesta'); }
+    if (d === 'down' && sel + COLS < JUEGOS.length) ir('juegos', sel + COLS);
+  }
+  if (pad.pressed('A') || pad.pressed('START')) abrir();
+  estado.classList.toggle('ok', pad.connected);
+  estado.lastElementChild.textContent = pad.connected ? 'Mando conectado' : (pad.source === 'tele' ? 'Pulsa un botón del mando' : esTactil ? 'Modo táctil' : 'Mando o teclado');
+  pintarFondo(now / 1000, dt);
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+</script>
+</body>
+</html>

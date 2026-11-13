@@ -1,0 +1,18 @@
+# Lo que se genera al construir la APK
+app/build/
+app/.herramientas/
+*.apk
+# La firma de la app: NUNCA al repositorio (con ella se pueden firmar actualizaciones)
+app/firma.keystore
+app/firma.clave
+# Ajustes de casa (otro nombre para la app instalada)
+app/local.conf
+app/local/
+# Las canciones con las que se juega en casa no se distribuyen con el proyecto
+web/musica/*.mp3
+*.keystore
+# Copias, bocetos y temporales
+*.zip
+/*.png
+__pycache__/
+.claude/

@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><style>html, body { margin: 0; overflow: hidden; } canvas { display: block; position: fixed; left: 0; top: 0; }</style><canvas id="c"></canvas>
+<script type="module">
+// El fondo del menú: un claro del bosque de verdad, sin personajes. Se captura una vez por estación
+// (?estacion=0..3) y se guarda en web/fondos/<n>.jpg.
+import * as THREE from '../lib/three.min.js';
+import { crearCielo, crearClaro } from '../comun/mundo.js';
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+r.setPixelRatio(1); r.setSize(1920, 1080);
+const e = new THREE.Scene();
+e.fog = new THREE.Fog('#dff3ff', 40, 150);
+e.add(new THREE.HemisphereLight('#e6f4ff', '#8fcf6a', 1.9));
+const sol = new THREE.DirectionalLight('#fff0dc', 2.1); sol.position.set(-30, 60, 25); e.add(sol);
+crearCielo(THREE, e);
+crearClaro(THREE, e, { radio: 26, semilla: 5, nArboles: 7, huecos: [{ x: 0, z: 12, r: 15 }] });
+// el horizonte, abajo: detrás de las carátulas queda cielo, y el bosque asoma por debajo del estante
+const cam = new THREE.PerspectiveCamera(46, 1920 / 1080, 0.1, 700);
+cam.position.set(0, 2.6, 24); cam.lookAt(0, 9.5, 0);
+const pinta = () => { r.render(e, cam); requestAnimationFrame(pinta); };
+pinta();
+</script>

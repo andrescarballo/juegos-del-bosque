@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>La despensa</title>
+<link rel="icon" href="../comun/icono.png">
+<link rel="stylesheet" href="../comun/estilo.css">
+<link rel="stylesheet" href="../comun/arena.css">
+</head>
+<body>
+<canvas id="lienzo"></canvas>
+<div id="flotantes" class="hud"></div>
+<div class="escenario hud" id="esc">
+  <div id="marcador"></div>
+  <div id="arriba" class="txt"><span id="nivel">La despensa</span><b id="tiempo"></b></div>
+  <div id="record" class="txt">Récord 0<b id="total"></b></div>
+  <div id="mensaje" class="txt"></div>
+  <div id="ayuda"><span>Stick: mover · coge bellotas (3 como mucho) y llévalas a tu madriguera · <span class="boton-a" style="background:#ffc531">Y</span> especial · <span class="boton-a boton-start">Menú</span> pausa</span></div>
+  <div id="panel"></div>
+  <div id="fps"></div>
+</div>
+<script type="module" src="juego.js"></script>
+</body>
+</html>

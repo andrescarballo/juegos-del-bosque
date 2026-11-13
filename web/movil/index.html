@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7b3fe4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mando · Juegos del bosque</title>
+<link rel="icon" href="../comun/icono.png">
+<link rel="stylesheet" href="../comun/estilo.css">
+<style>
+  * { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { background: linear-gradient(135deg, #8f6af0, #4fc3ff); touch-action: none; overscroll-behavior: none; }
+  #zona { position: fixed; inset: 0; touch-action: none; }
+  .barra { position: fixed; top: max(3vmin, env(safe-area-inset-top)); left: max(4vmin, env(safe-area-inset-left)); right: max(4vmin, env(safe-area-inset-right));
+    display: flex; align-items: center; gap: 3vmin; z-index: 11; pointer-events: none; }
+  .pill { pointer-events: auto; background: rgba(255,255,255,.9); color: #5a4a7a; border-radius: 999px; padding: 1.6vmin 3.4vmin;
+    font-size: 4.2vmin; display: flex; align-items: center; gap: 2vmin; box-shadow: 0 .8vmin 0 rgba(0,0,0,.12); }
+  .pill i { width: 3vmin; height: 3vmin; border-radius: 50%; background: #ffb547; display: inline-block; }
+  .pill.ok i { background: #3dbb4c; box-shadow: 0 0 0 1.2vmin rgba(61,187,76,.25); }
+  .pill.mal i { background: #ff4d4d; }
+  .hueco { flex: 1; }
+  .chico { font-size: 4vmin; padding: 1.6vmin 3vmin; cursor: pointer; }
+  .chico.on { transform: scale(.92); background: #fff; }
+
+  .base { position: fixed; width: 34vmin; height: 34vmin; margin: -17vmin 0 0 -17vmin; border-radius: 50%; z-index: 1;
+    background: rgba(255,255,255,.18); border: .8vmin solid rgba(255,255,255,.7); pointer-events: none; }
+  .base.reposo { opacity: .45; }
+  .base .bola { position: absolute; left: 50%; top: 50%; width: 15vmin; height: 15vmin; margin: -7.5vmin 0 0 -7.5vmin; border-radius: 50%;
+    background: #fff; box-shadow: 0 .8vmin 0 rgba(60,20,110,.25); }
+  .base.cam { width: 26vmin; height: 26vmin; margin: -13vmin 0 0 -13vmin; display: none; }
+  .base.cam .bola { width: 11vmin; height: 11vmin; margin: -5.5vmin 0 0 -5.5vmin; background: #e9e1ff; }
+  .etiqueta { position: fixed; z-index: 1; color: rgba(255,255,255,.8); font-size: 3.6vmin; pointer-events: none; }
+
+  .btn { position: fixed; z-index: 2; border-radius: 50%; display: grid; place-items: center; color: #fff; touch-action: none;
+    box-shadow: inset 0 -1.6vmin 0 rgba(0,0,0,.22), 0 1vmin 2vmin rgba(40,10,80,.25); transition: transform .05s; }
+  .btn.on { transform: scale(.88); filter: brightness(1.2); }
+  #bA { width: 27vmin; height: 27vmin; font-size: 13vmin; background: #3dbb4c; }
+  #bB, #bX, #bY { width: 18vmin; height: 18vmin; font-size: 8vmin; }
+  #bB { background: #ff4d4d; } #bX { background: #3aa0ff; } #bY { background: #ffc531; }
+
+  #gira { position: fixed; inset: 0; z-index: 10; display: none; place-items: center; text-align: center; color: #fff; font-size: 7vw;
+    background: linear-gradient(135deg, rgba(143,106,240,.97), rgba(79,195,255,.97)); }
+  #gira span { display: block; font-size: 22vw; animation: girar 1.6s ease-in-out infinite; }
+  #gira small { display: block; margin-top: 6vw; font-size: 4.6vw; opacity: .85; }
+  @keyframes girar { 50% { transform: rotate(-90deg); } }
+  @media (orientation: portrait) { #gira.activo { display: grid; } }
+  #gira.siempre { display: grid; }
+</style>
+</head>
+<body>
+<div id="zona"></div>
+<div class="barra">
+  <div class="pill" id="estado"><i></i><span>Conectando con la tele…</span></div>
+  <div class="hueco"></div>
+  <div class="pill chico" id="bStart">Menú</div>
+</div>
+<div class="base reposo" id="stick"><div class="bola"></div></div>
+<div class="base cam" id="cam"><div class="bola"></div></div>
+<div class="etiqueta" id="etqMover">mover</div>
+<div class="etiqueta" id="etqCam">desliza: cámara</div>
+<div class="btn" id="bY">Y</div>
+<div class="btn" id="bX">X</div>
+<div class="btn" id="bB">B</div>
+<div class="btn" id="bA">A</div>
+<div id="gira"><div><span>📱</span><b id="giraTxt">Toca para empezar</b><small id="giraSub">se pondrá en pantalla completa</small></div></div>
+
+<script>
+// Mando en el móvil: manda "p,botones,lx,ly,rx,ry" por WebSocket a la app de la tele.
+const BIT = { A: 0, B: 1, X: 2, Y: 3, START: 9 };
+const $ = (id) => document.getElementById(id);
+const estado = { mask: 0, lx: 0, ly: 0, rx: 0, ry: 0 };
+let ws = null, conectado = false, ultimoEnvio = 0, ultimoTexto = '';
+
+function pinta(txt, clase) {
+  const e = $('estado');
+  e.className = 'pill ' + (clase || '');
+  e.lastElementChild.textContent = txt;
+}
+
+// Clave fija de este móvil: si se corta la conexión, la tele le devuelve el mismo número (y su jugador)
+const miClave = (() => {
+  let c = null;
+  try { c = localStorage.getItem('bosque.movil'); } catch (e) { /* sin almacenamiento */ }
+  if (!c || !/^[a-z0-9]{6,40}$/.test(c)) {
+    c = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+    try { localStorage.setItem('bosque.movil', c); } catch (e) { /* da igual: valdrá mientras siga la página */ }
+  }
+  return c;
+})();
+
+// Dos formas de llegar al juego: WebSocket a la app de la tele, o (con ?p=ID) WebRTC directo a la página del juego en la web.
+const idJuego = new URLSearchParams(location.search).get('p');
+let peer = null;
+function crearEnlace() {
+  if (!idJuego) return new WebSocket(`ws://${location.host}/ws?id=${miClave}`);
+  // misma interfaz que un WebSocket: onopen / onmessage / onclose / onerror / send / close / readyState
+  const e = { readyState: 0, onopen: null, onmessage: null, onclose: null, onerror: null, conn: null,
+    send(t) { try { this.conn.send(t); } catch (x) { /* nada */ } },
+    close() { try { this.conn && this.conn.close(); } catch (x) { /* nada */ } try { peer && peer.destroy(); } catch (x) { /* nada */ } } };
+  const caer = () => { if (e.readyState === 3) return; e.readyState = 3; try { peer && peer.destroy(); } catch (x) { /* nada */ } e.onclose && e.onclose(); };
+  const lanzar = () => {
+    peer = new Peer();
+    peer.on('open', () => {
+      const c = peer.connect(idJuego, { reliable: false, metadata: { clave: miClave } });
+      e.conn = c;
+      c.on('open', () => { e.readyState = 1; e.onopen && e.onopen(); });
+      c.on('data', (d) => e.onmessage && e.onmessage({ data: d }));
+      c.on('close', caer); c.on('error', caer);
+    });
+    peer.on('error', caer);
+    peer.on('disconnected', () => { if (e.readyState !== 1) caer(); });
+  };
+  if (window.Peer) lanzar();
+  else { const s = document.createElement('script'); s.src = '../lib/peerjs.min.js'; s.onload = lanzar; s.onerror = caer; document.head.appendChild(s); }
+  setTimeout(() => { if (e.readyState === 0) caer(); }, 8000);   // si no llega, reintenta
+  return e;
+}
+
+function conectar() {
+  pinta('Conectando con la tele…');
+  try { ws = crearEnlace(); } catch (e) { setTimeout(conectar, 1500); return; }
+  ws.onopen = () => { conectado = true; pinta('Conectado', 'ok'); vibra(30); };
+  ws.onmessage = (ev) => {
+    const [tipo, valor] = String(ev.data).split(',');
+    if (tipo === 'ok') pinta(`Conectado · jugador ${valor}`, 'ok');
+    if (tipo === 'v') vibra(parseInt(valor, 10) || 30);
+  };
+  ws.onclose = () => { conectado = false; pinta('Sin conexión, reintentando…', 'mal'); setTimeout(conectar, 1200); };
+  ws.onerror = () => { try { ws.close(); } catch (e) { /* nada */ } };
+}
+
+function vibra(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { /* iPhone no vibra */ } }
+
+function enviar(ahora) {
+  if (!conectado || ws.readyState !== 1) return;
+  const f = (v) => v.toFixed(3);
+  const t = `p,${estado.mask},${f(estado.lx)},${f(estado.ly)},${f(estado.rx)},${f(estado.ry)}`;
+  if (t !== ultimoTexto || ahora - ultimoEnvio > 300) {   // al cambiar, y cada 300 ms para seguir "vivo"
+    ws.send(t);
+    ultimoTexto = t;
+    ultimoEnvio = ahora;
+  }
+}
+
+// ---------- Colocar los botones ----------
+function colocar() {
+  const m = Math.min(innerWidth, innerHeight) / 100;  // 1vmin en px
+  const right = Math.max(5 * m, 0), bottom = 6 * m;
+  const cx = innerWidth - right - 30 * m, cy = innerHeight - bottom - 26 * m; // centro del rombo
+  const pon = (el, x, y) => { const r = el.offsetWidth / 2; el.style.left = (x - r) + 'px'; el.style.top = (y - r) + 'px'; };
+  pon($('bA'), cx, cy + 15 * m);
+  pon($('bB'), cx + 20 * m, cy - 1 * m);
+  pon($('bX'), cx - 20 * m, cy - 1 * m);
+  pon($('bY'), cx, cy - 18 * m);
+  reposo();
+  $('etqMover').style.left = 10 * m + 'px'; $('etqMover').style.top = (innerHeight - 8 * m) + 'px';
+  $('etqCam').style.left = (innerWidth * 0.5 + 2 * m) + 'px'; $('etqCam').style.top = (14 * m) + 'px';
+}
+function reposo() {
+  const m = Math.min(innerWidth, innerHeight) / 100;
+  const s = $('stick');
+  s.classList.add('reposo');
+  s.style.left = 24 * m + 'px'; s.style.top = (innerHeight - 24 * m) + 'px';
+  s.firstElementChild.style.transform = '';
+}
+addEventListener('resize', colocar);
+
+// ---------- Botones ----------
+for (const [id, nombre] of [['bA', 'A'], ['bB', 'B'], ['bX', 'X'], ['bY', 'Y'], ['bStart', 'START']]) {
+  const el = $(id), bit = 1 << BIT[nombre];
+  const on = (e) => { e.preventDefault(); e.stopPropagation(); try { el.setPointerCapture(e.pointerId); } catch (x) {} el.classList.add('on'); estado.mask |= bit; vibra(12); enviar(performance.now()); };
+  const off = () => { el.classList.remove('on'); estado.mask &= ~bit; enviar(performance.now()); };
+  el.addEventListener('pointerdown', on);
+  el.addEventListener('pointerup', off);
+  el.addEventListener('pointercancel', off);
+}
+// ---------- Pantalla completa y sin zoom ----------
+// La pantalla completa solo se puede pedir al LEVANTAR el dedo (pointerup/touchend cuentan como gesto
+// del usuario; pointerdown con el dedo no). Por eso sale un aviso "Toca para empezar".
+const raiz = document.documentElement;
+const pideFS = raiz.requestFullscreen || raiz.webkitRequestFullscreen;   // iPhone no lo tiene
+const enFS = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+let verticalVale = false;   // sin pantalla completa (iPhone): dejó seguir en vertical
+let avisoQuitado = false;   // ya tocó el aviso (vuelve a salir si sale de la pantalla completa)
+function aviso() {
+  const g = $('gira');
+  if (pideFS) {
+    g.classList.toggle('siempre', !enFS() && !avisoQuitado);
+    g.classList.remove('activo');
+    $('giraTxt').textContent = 'Toca para empezar';
+    $('giraSub').textContent = 'se pondrá en pantalla completa';
+  } else {
+    g.classList.toggle('activo', !verticalVale);
+    $('giraTxt').textContent = 'Gira el móvil';
+    $('giraSub').textContent = 'o toca para seguir en vertical';
+  }
+}
+function entrar() {
+  if (!pideFS) { verticalVale = true; aviso(); return; }
+  avisoQuitado = true; aviso();
+  if (enFS()) return;
+  try {
+    const r = pideFS.call(raiz, { navigationUI: 'hide' });
+    Promise.resolve(r).then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (x) {} }, () => {});
+  } catch (x) { /* no se puede: da igual */ }
+}
+$('gira').addEventListener('pointerdown', (e) => e.preventDefault());
+$('gira').addEventListener('pointerup', (e) => { e.preventDefault(); entrar(); });
+const cambioFS = () => { if (!enFS()) avisoQuitado = false; aviso(); colocar(); };
+document.addEventListener('fullscreenchange', cambioFS);
+document.addEventListener('webkitfullscreenchange', cambioFS);
+// Sin zoom: ni pellizco, ni doble toque, ni arrastrar la página (iPhone ignora user-scalable=no)
+const nada = (e) => e.preventDefault();
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick']) document.addEventListener(ev, nada, { passive: false });
+document.addEventListener('touchmove', nada, { passive: false });
+document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
+// ---------- Sticks ----------
+let stickId = null, ox = 0, oy = 0, camId = null, cx0 = 0, cy0 = 0;
+const zona = $('zona');
+zona.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  if (stickId === null && e.clientX < innerWidth * 0.5) {
+    stickId = e.pointerId; ox = e.clientX; oy = e.clientY;
+    const s = $('stick'); s.classList.remove('reposo'); s.style.left = ox + 'px'; s.style.top = oy + 'px';
+  } else if (camId === null && e.clientX >= innerWidth * 0.5) {
+    camId = e.pointerId; cx0 = e.clientX; cy0 = e.clientY;
+    const c = $('cam'); c.style.display = 'block'; c.style.left = cx0 + 'px'; c.style.top = cy0 + 'px';
+  } else return;
+  try { zona.setPointerCapture(e.pointerId); } catch (x) {}
+});
+zona.addEventListener('pointermove', (e) => {
+  const m = Math.min(innerWidth, innerHeight) / 100;
+  if (e.pointerId === stickId) {
+    const R = 14 * m;
+    let dx = (e.clientX - ox) / R, dy = (e.clientY - oy) / R;
+    const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; }
+    estado.lx = dx; estado.ly = dy;
+    $('stick').firstElementChild.style.transform = `translate(${dx * R}px, ${dy * R}px)`;
+  } else if (e.pointerId === camId) {
+    const R = 10 * m;
+    let dx = (e.clientX - cx0) / R, dy = (e.clientY - cy0) / R;
+    const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; }
+    estado.rx = dx; estado.ry = dy;
+    $('cam').firstElementChild.style.transform = `translate(${dx * R}px, ${dy * R}px)`;
+  }
+});
+const soltar = (e) => {
+  if (e.pointerId === stickId) { stickId = null; estado.lx = 0; estado.ly = 0; reposo(); }
+  if (e.pointerId === camId) { camId = null; estado.rx = 0; estado.ry = 0; $('cam').style.display = 'none'; $('cam').firstElementChild.style.transform = ''; }
+  enviar(performance.now());
+};
+zona.addEventListener('pointerup', soltar);
+zona.addEventListener('pointercancel', soltar);
+addEventListener('contextmenu', (e) => e.preventDefault());
+
+function bucle(t) { enviar(t); requestAnimationFrame(bucle); }
+colocar();
+aviso();
+conectar();
+requestAnimationFrame(bucle);
+window.__mando = estado;
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><script>
+// Prepara una partida de mentira y abre un juego sin letreros, para capturar las carátulas del menú.
+//   foto.html?juego=carrera&animales=zorro,oveja,oso&estacion=2
+const q = new URLSearchParams(location.search), juego = q.get('juego') || 'globo';
+const animales = (q.get('animales') || 'zorro,oveja,conejo').split(',');
+const COLORES = ['#ff4d6d', '#2fb4ff', '#3dbb4c', '#ffb21a'], NOMBRES = ['Ana', 'Papá', 'Mamá', 'Abu'];
+const perfiles = animales.map((a, i) => ({ id: 'foto' + i, nombre: NOMBRES[i], animal: a, pelo: 'natural', accesorio: (q.get('acc') || 'nada,nada,nada,nada').split(',')[i] || 'nada', color: COLORES[i], records: {} }));
+localStorage.setItem('bosque.perfiles', JSON.stringify(perfiles));
+sessionStorage.setItem('bosque.partida', JSON.stringify({ juego, jugadores: perfiles.map((p, i) => ({ perfil: p.id, dispositivo: i === 0 && q.has('teclado') ? 'teclado' : 'foto' + i })) }));
+// con &teclado el primer jugador se maneja con el teclado y se ven los letreros (para probar un animal concreto)
+location.replace(`../${juego}/index.html?${q.has('teclado') ? '' : 'foto&'}estacion=${q.get('estacion') || 1}${q.has('sinhojas') ? '&sinhojas' : ''}`);
+</script>
