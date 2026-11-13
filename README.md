@@ -1,17 +1,26 @@
 # Juegos del bosque
 
-Consolita de minijuegos para la tele (Chromecast con Google TV) que se juegan con el mando de Xbox.
+Minijuegos de animales del bosque para jugar en la tele con mando (o con el móvil como mando), de uno a cuatro jugadores.
+
+- **Jugar en el navegador:** https://andrescarballo.github.io/juegos-del-bosque/ (PC, tablet o tele con navegador; mando, teclado o pantalla táctil).
+- **Instalar en una tele con Android TV / Google TV / Fire TV:** la APK está en [Releases](https://github.com/andrescarballo/juegos-del-bosque/releases/latest).
+
+En el repositorio:
 
 - `web/`: el menú y los juegos en HTML + Three.js. Funcionan igual en la tele, en el PC y en GitHub Pages.
 - `app/`: la app Android contenedora, una vista web a pantalla completa con puente para el mando.
 
-## Instalar en el Chromecast
+## Instalar en la tele
 
-1. **Activa las opciones de desarrollador**: Ajustes → Sistema → Información → pulsa 7 veces en "Compilación del SO de Android TV".
+Vale para Chromecast con Google TV, teles con Android TV o Google TV y Fire TV. (En teles Samsung o LG no se puede instalar: ahí se juega desde el navegador de la tele.)
+
+1. **Permite instalar apps de fuera de la tienda.** En Google TV: Ajustes → Sistema → Información → pulsa 7 veces en "Compilación del SO de Android TV" para activar las opciones de desarrollador. En Fire TV: Ajustes → Mi Fire TV → Opciones para desarrolladores.
 2. Elige una de estas dos vías:
-   - **Sin cables:** instala la app *Downloader* desde Google Play. Dale permiso para instalar apps desconocidas (Ajustes → Apps → Seguridad y restricciones → Fuentes desconocidas) y abre con ella un enlace a `JuegosDelBosque.apk`. Sirve un enlace de GitHub Releases o de Drive.
-   - **Con adb desde el PC:** activa la depuración de red y ejecuta `adb connect IP_DEL_CHROMECAST:5555` y después `adb install -r JuegosDelBosque.apk`.
-3. La app aparece en "Tus apps" con el banner del arcoíris.
+   - **Sin cables:** instala la app *Downloader* desde la tienda de la tele. Dale permiso para instalar apps desconocidas (Ajustes → Apps → Seguridad y restricciones → Fuentes desconocidas) y escribe en ella esta dirección: `https://github.com/andrescarballo/juegos-del-bosque/releases/latest/download/JuegosDelBosque.apk`
+   - **Con adb desde el PC:** activa la depuración de red, descarga la APK y ejecuta `adb connect IP_DE_LA_TELE:5555` y después `adb install -r JuegosDelBosque.apk`.
+3. La app aparece en "Tus apps" con el cartel del arcoíris.
+
+La app abre siempre la última versión publicada de los juegos; si no hay internet, usa la copia que lleva dentro.
 
 El mando de Xbox tiene que estar emparejado con el Chromecast (Ajustes → Mandos y accesorios). Lo primero que conviene abrir es **"Probar el mando"**: ahí se ve si llegan todos los botones y los sticks.
 
@@ -87,6 +96,16 @@ Pintabosque (`pintar/`), La despensa (`despensa/`) y Al redil (`redil/`) compart
 
 `app/local.conf` (no se sube) puede definir `NOMBRE_APP`, `PAQUETE` y `NOMBRE_APK`, y lo que haya en `app/local/res/` sustituye a `app/res/` (por ejemplo, el cartel con el nombre). Así la app instalada en casa puede llamarse de otra forma y conservar su identificador, y lo publicado sigue siendo «Juegos del bosque». Para hacer un cartel con otro nombre: `web/_prueba/icono.html?banner&nombre=…`.
 
+## Publicar una versión de la APK
+
+```bash
+cd app
+./build.sh --publica https://andrescarballo.github.io/juegos-del-bosque/
+gh release create v0.1 build/JuegosDelBosque.apk --title "Juegos del bosque 0.1" --notes "Primera versión"
+```
+
+`--publica` mete en la APK solo lo que está guardado en git (sin páginas de prueba ni ajustes de casa) y la firma con `firma-publica.keystore`. Las versiones siguientes tienen que ir firmadas con esa misma firma: guárdala.
+
 ## Reconstruir la APK
 
 Solo hace falta Java 17 o superior. La primera vez se bajan de GitHub apktool, dx y apksigner.
@@ -97,7 +116,7 @@ cd app
 ./build.sh https://...     # abre tu web y usa la copia de dentro si no hay red
 ```
 
-**Guarda `app/firma.keystore` y `app/firma.clave`** (la firma y su contraseña; ninguna de las dos se sube al repositorio). Las actualizaciones tienen que ir firmadas con la misma clave. Si la pierdes, tendrás que desinstalar la app antes de instalar la nueva.
+**Guarda `app/firma*.keystore` y `app/firma*.clave`** (las firmas y sus contraseñas; no se suben al repositorio). `firma.*` es la de la versión de casa y `firma-publica.*` la de la APK que se reparte (`./build.sh --publica`). Las actualizaciones tienen que ir firmadas con la misma clave. Si la pierdes, tendrás que desinstalar la app antes de instalar la nueva.
 
 ## Depurar en la tele
 

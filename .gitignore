@@ -5,6 +5,7 @@ app/.herramientas/
 # La firma de la app: NUNCA al repositorio (con ella se pueden firmar actualizaciones)
 app/firma.keystore
 app/firma.clave
+app/firma*.clave
 # Ajustes de casa (otro nombre para la app instalada)
 app/local.conf
 app/local/

@@ -53,13 +53,15 @@ if [ ! -x "$CACHE/aapt2" ]; then
 fi
 
 # ---- Firma (guárdala: con otra firma no se puede actualizar la app instalada) ----
-KEYSTORE="$APP_DIR/firma.keystore"
+# La APK pública lleva su propia firma (firma-publica.*): el certificado va dentro de la APK y dice a nombre de quién está
+FIRMA="firma"; [ -n "$PUBLICA" ] && FIRMA="firma-publica"
+KEYSTORE="$APP_DIR/$FIRMA.keystore"
 # La contraseña de la firma no va en este archivo: se lee de la variable FIRMA_CLAVE o de app/firma.clave
 # (que, como la firma, no se sube al repositorio). Si no hay ninguna, se inventa una y se guarda ahí.
-CLAVE_FICHERO="$APP_DIR/firma.clave"
+CLAVE_FICHERO="$APP_DIR/$FIRMA.clave"
 if [ -z "${FIRMA_CLAVE:-}" ]; then
   if [ ! -f "$CLAVE_FICHERO" ]; then
-    if [ -f "$KEYSTORE" ]; then echo "Falta la contraseña de $KEYSTORE: ponla en FIRMA_CLAVE o en app/firma.clave"; exit 1; fi
+    if [ -f "$KEYSTORE" ]; then echo "Falta la contraseña de $KEYSTORE: ponla en FIRMA_CLAVE o en app/$FIRMA.clave"; exit 1; fi
     (umask 077; head -c 18 /dev/urandom | base64 | tr -d '/+=' > "$CLAVE_FICHERO")
   fi
   FIRMA_CLAVE="$(cat "$CLAVE_FICHERO")"
