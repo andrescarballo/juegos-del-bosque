@@ -6,6 +6,9 @@
 #   ./build.sh https://TU_USUARIO.github.io/juegos-del-bosque/
 #                                                -> abre tu web; si no hay red, usa la copia de dentro
 #
+#   ./build.sh --publica [URL]                  -> la APK para repartir: solo lo que está en el repositorio (git),
+#                                                sin páginas de prueba ni los ajustes de casa
+#
 # Resultado: build/JuegosDelBosque.apk
 #
 # Para una versión de casa con otro nombre: app/local.conf (no se sube al repositorio) puede definir NOMBRE_APP,
@@ -17,11 +20,12 @@ APP_DIR="$(pwd)"
 WEB_DIR="$APP_DIR/../web"
 OUT="$APP_DIR/build"
 CACHE="${JUEGOS_TOOLS:-$APP_DIR/.herramientas}"
+PUBLICA=""; if [ "${1:-}" = "--publica" ]; then PUBLICA=1; shift; fi
 START_URL="${1:-}"
 VERSION_CODE="${VERSION_CODE:-$(date +%s | cut -c1-9)}"
 VERSION_NAME="${VERSION_NAME:-0.1}"
 NOMBRE_APP="Juegos del bosque"; PAQUETE=""; NOMBRE_APK="JuegosDelBosque"
-[ -f "$APP_DIR/local.conf" ] && . "$APP_DIR/local.conf"
+[ -z "$PUBLICA" ] && [ -f "$APP_DIR/local.conf" ] && . "$APP_DIR/local.conf"
 
 APKTOOL_URL="https://github.com/iBotPeaches/Apktool/releases/download/v2.12.1/apktool_2.12.1.jar"
 DEX2JAR_URL="https://github.com/pxb1988/dex2jar/releases/download/v2.4/dex-tools-v2.4.zip"
@@ -88,7 +92,14 @@ else
 fi
 
 # ---- Juegos dentro de la APK ----
-cp -R "$WEB_DIR" "$OUT/assets/web"
+if [ -n "$PUBLICA" ]; then
+  # Solo lo que está guardado en git (así no entra nada de casa: ni canciones, ni pruebas a medias)
+  [ -z "$(git -C "$APP_DIR/.." status --porcelain -- web app)" ] || echo "Aviso: hay cambios sin guardar en git; la APK pública lleva lo del último commit."
+  git -C "$APP_DIR/.." archive HEAD web | tar -x -C "$OUT/assets"
+  rm -rf "$OUT/assets/web/_prueba"
+else
+  cp -R "$WEB_DIR" "$OUT/assets/web"
+fi
 if [ "$NOMBRE_APP" != "Juegos del bosque" ]; then   # versión de casa: su nombre también en el menú
   sed -i "s/Juegos del bosque/$NOMBRE_APP/g" "$OUT/assets/web/index.html" "$OUT/assets/web/manifest.webmanifest" "$OUT/assets/web/movil/index.html"
 fi
@@ -96,7 +107,7 @@ printf '%s\n' "$START_URL" > "$OUT/assets/start_url.txt"
 
 # ---- Recursos + manifiesto -> APK ----
 cp -R res "$OUT/res-src"
-[ -d local/res ] && cp -R local/res/. "$OUT/res-src/"
+[ -z "$PUBLICA" ] && [ -d local/res ] && cp -R local/res/. "$OUT/res-src/"
 printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="app_name">%s</string>\n</resources>\n' "$NOMBRE_APP" > "$OUT/res-src/values/strings.xml"
 "$CACHE/aapt2" compile --dir "$OUT/res-src" -o "$OUT/res/res.zip"
 "$CACHE/aapt2" link -o "$OUT/base.apk" -I "$CACHE/android-framework.jar" \
