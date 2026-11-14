@@ -2,8 +2,8 @@
 
 Minijuegos de animales del bosque para jugar en la tele con mando (o con el móvil como mando), de uno a cuatro jugadores.
 
-- **Jugar en el navegador:** https://andrescarballo.github.io/juegos-del-bosque/ (PC, tablet o tele con navegador; mando, teclado o pantalla táctil).
-- **Instalar en una tele con Android TV / Google TV / Fire TV:** la APK está en [Releases](https://github.com/andrescarballo/juegos-del-bosque/releases/latest).
+- **Jugar en el navegador:** https://juegosdelbosque.github.io/juegos-del-bosque/ (PC, tablet o tele con navegador; mando, teclado o pantalla táctil).
+- **Instalar en una tele con Android TV / Google TV / Fire TV:** la APK está en [Releases](https://github.com/juegosdelbosque/juegos-del-bosque/releases/latest).
 
 En el repositorio:
 
@@ -16,7 +16,7 @@ Vale para Chromecast con Google TV, teles con Android TV o Google TV y Fire TV. 
 
 1. **Permite instalar apps de fuera de la tienda.** En Google TV: Ajustes → Sistema → Información → pulsa 7 veces en "Compilación del SO de Android TV" para activar las opciones de desarrollador. En Fire TV: Ajustes → Mi Fire TV → Opciones para desarrolladores.
 2. Elige una de estas dos vías:
-   - **Sin cables:** instala la app *Downloader* desde la tienda de la tele. Dale permiso para instalar apps desconocidas (Ajustes → Apps → Seguridad y restricciones → Fuentes desconocidas) y escribe en ella esta dirección: `https://github.com/andrescarballo/juegos-del-bosque/releases/latest/download/JuegosDelBosque.apk`
+   - **Sin cables:** instala la app *Downloader* desde la tienda de la tele. Dale permiso para instalar apps desconocidas (Ajustes → Apps → Seguridad y restricciones → Fuentes desconocidas) y escribe en ella esta dirección: `https://github.com/juegosdelbosque/juegos-del-bosque/releases/latest/download/JuegosDelBosque.apk`
    - **Con adb desde el PC:** activa la depuración de red, descarga la APK y ejecuta `adb connect IP_DE_LA_TELE:5555` y después `adb install -r JuegosDelBosque.apk`.
 3. La app aparece en "Tus apps" con el cartel del arcoíris.
 
@@ -100,7 +100,7 @@ Pintabosque (`pintar/`), La despensa (`despensa/`) y Al redil (`redil/`) compart
 
 ```bash
 cd app
-./build.sh --publica https://andrescarballo.github.io/juegos-del-bosque/
+./build.sh --publica https://juegosdelbosque.github.io/juegos-del-bosque/
 gh release create v0.1 build/JuegosDelBosque.apk --title "Juegos del bosque 0.1" --notes "Primera versión"
 ```
 
